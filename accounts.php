@@ -38,8 +38,9 @@ if (isset($_POST['addacc']))
 {
     $acc_name = $dbh->quote(filter_input(INPUT_POST, 'name', FILTER_SANITIZE_STRING));
     $acc_addr = $dbh->quote(filter_input(INPUT_POST, 'address', FILTER_SANITIZE_STRING));
+		$acc_coin = $dbh->quote(filter_input(INPUT_POST, 'cryptocoin', FILTER_SANITIZE_STRING));
 
-    $updq = "INSERT INTO accounts (name, address, `group`) VALUES (".$acc_name.", ".$acc_addr.", ".$_POST['groupid'].");";
+    $updq = "INSERT INTO accounts (name, address, `group`, `cryptocoin`) VALUES (".$acc_name.", ".$acc_addr.", ".$_POST['groupid'].", ".$acc_coin.");";
     $updr = $dbh->exec($updq);
     db_error();
 }
