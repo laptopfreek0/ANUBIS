@@ -116,7 +116,7 @@ if (isset($id))
         	<th scope="col" class="rounded-company">Name</th>
             <th scope="col" class="rounded-q1">IP / Hostname</th>
             <th scope="col" class="rounded-q1">Port</th>
-            <th scope="col" class="rounded-q1">MH/s desired</th>
+            <th scope="col" class="rounded-q1"><?=$config->Hashrate?> desired</th>
         </tr>
         <tr>
         <td align=center><input type="text" name="macname" value=""></td>

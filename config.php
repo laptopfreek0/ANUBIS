@@ -95,6 +95,11 @@ if (isset($_POST['saveconf'])) {
 		$email = $dbh->quote($_POST['email']);
 		$updstring = $updstring . " email = $email, ";
 	}
+
+	if (isset($_POST['hashrate'])) {
+		$hashrate = $dbh->quote($_POST['hashrate']);
+		$updstring .= " hashrate = $hashrate, ";
+	}
 		
 	$updstring = substr($updstring,0,-2);
 	
@@ -213,19 +218,31 @@ echo "<b>Configuration updated !</b>";
         <td><input type=text name="maxfan" value="<?=$config->maxfan?>"></td>        
         </tr>
         <tr>
-        <td class="blue">min. % of desired 5s MH/s</td>
+        <td class="blue">min. % of desired 5s <?=$config->Hashrate?></td>
         <td><input type=text name="yellowgessper" value="<?=$config->yellowgessper?>"></td>
         <td><input type=text name="maxgessper" value="<?=$config->maxgessper?>"></td>        
         </tr>
         <tr>
-        <td class="blue">min. % of desired average MH/s</td>
+        <td class="blue">min. % of desired average <?=$config->Hashrate?></td>
         <td><input type=text name="yellowavgmhper" value="<?=$config->yellowavgmhper?>"></td>
         <td><input type=text name="maxavgmhper" value="<?=$config->maxavgmhper?>"></td>        
+        </tr>
+			  <tr>
+        <td class="blue">Hashrate Measured in</td>
+        <td>
+				<select name="hashrate">
+				<option value='1000' <? if ($config->hashrate == 1000) echo 'SELECTED'; ?>>GH/s</option>
+				<option value='1' <? if ($config->hashrate == 1) echo 'SELECTED'; ?>>MH/s</option>
+				<option value='0.001' <? if ($config->hashrate == 0.001) echo 'SELECTED'; ?>>KH/s</option>
+				</select>
+				</td>
+				<td>
+				</td>
         </tr>
         <tr>
         <td class="blue">E-Mail Address for Notifications</td>
         <td colspan=2><input type=text name="email" value="<?=$config->email?>"></td>
-        </tr>        
+        </tr>
         <tr>
         <td colspan="3" class="blue"><input type=submit name=saveconf value="Save"></td>
         </tr> 

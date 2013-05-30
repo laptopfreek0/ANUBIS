@@ -13,7 +13,7 @@ $data_totals = array('hosts'=>0,
                      'desmhash'=>0,
                      'utility'=>0,
                      'Wutility'=>0,
-					 'fivesmhash'=>0,
+										 'fivesmhash'=>0,
                      'avemhash'=>0,
                      'getworks'=>0,
                      'VarDiffAccepts'=>0, 
@@ -41,8 +41,23 @@ function get_config_data()
   $config = null;
 
   $result = $dbh->query("SELECT * FROM configuration");
-  if ($result)
+  if ($result) {
     $config = $result->fetch(PDO::FETCH_OBJ);
+		switch($config->hashrate) {
+    	case 1000:
+      	$config->Hashrate = 'GH/s';
+      	break;
+    	case 1:
+      	$config->Hashrate = 'MH/s';
+      	break;
+    	case 0.001:
+      	$config->Hashrate = 'KH/s';
+      	break;
+    	default:
+      	$config->Hashrate = 'MH/s';
+      	break;
+		}
+	}
 
   return $config;
 }
@@ -305,16 +320,17 @@ function set_share_colour($shares_array)
 *****************************************************************************/
 function create_host_header()
 {
+	global $config;
   $header =
     "<thead>
     	<tr>
         	<th scope='col' rowspan='2' class='rounded-company'>Address</th>
             <th scope='col' rowspan='2' class='rounded-q1'>Devs</th>
             <th scope='col' rowspan='2' class='rounded-q1'>Temp max</th>
-            <th scope='col' rowspan='2' class='rounded-q1'>MH/s des</th>
+            <th scope='col' rowspan='2' class='rounded-q1'>$config->Hashrate des</th>
             <th scope='col' rowspan='2' class='rounded-q1'>Util</th>
-            <th scope='col' rowspan='2' class='rounded-q1'>MH/s 5s</th>
-            <th scope='col' rowspan='2' class='rounded-q1'>MH/s avg</th>
+            <th scope='col' rowspan='2' class='rounded-q1'>$config->Hashrate 5s</th>
+            <th scope='col' rowspan='2' class='rounded-q1'>$config->Hashrate avg</th>
             <th scope='col' rowspan='2' class='rounded-q1'>Gets</th>
             <th scope='col' colspan='2' class='rounded-q1'>Accepted</th>
             <th scope='col' rowspan='2' class='rounded-q1'>Diff</th>
@@ -461,8 +477,9 @@ function process_host_disp($desmhash, $summary_data_array, $dev_data_array)
     if ($dev_data_array != null)
       $devs = process_host_devs($dev_data_array, $activedevs, $fivesmhash, $max_temp);
 
-    $avgmhash =   $summary_data_array['SUMMARY'][0]['MHS av'];
-    $accepted =   $summary_data_array['SUMMARY'][0]['Accepted'];
+    $avgmhash =   $summary_data_array['SUMMARY'][0]['MHS av']/$config->hashrate;
+    $fivesmhash = $fivesmhash/$config->hashrate;
+		$accepted =   $summary_data_array['SUMMARY'][0]['Accepted'];
     $rejected =   $summary_data_array['SUMMARY'][0]['Rejected'];
     $discarded =  $summary_data_array['SUMMARY'][0]['Discarded'];
     $stale =      $summary_data_array['SUMMARY'][0]['Stale'];
@@ -601,6 +618,7 @@ function get_host_summary($host_data)
 *****************************************************************************/
 function create_devs_header()
 {
+global $config;
 $header =
     "<thead>
     	<tr>
@@ -613,8 +631,8 @@ $header =
             <th scope='col' class='rounded-q1'>Mem Clk</th>
             <th scope='col' class='rounded-q1'>Volt</th>
             <th scope='col' class='rounded-q1'>Active</th>
-            <th scope='col' class='rounded-q1'>MH/s 5s</th>
-            <th scope='col' class='rounded-q1'>MH/s avg</th>
+            <th scope='col' class='rounded-q1'>$config->Hashrate 5s</th>
+            <th scope='col' class='rounded-q1'>$config->Hashrate avg</th>
             <th scope='col' class='rounded-q1'>Acc</th>
             <th scope='col' class='rounded-q1'>Rej</th>
             <th scope='col' class='rounded-q1'>H/W Err</th>
