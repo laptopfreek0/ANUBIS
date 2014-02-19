@@ -12,6 +12,7 @@ $mtgox_url = 'https://mtgox.com/api/1/';
 $mtgox_exchange_path = '/public/ticker';
 $btc_url = 'https://btc-e.com/api/2/';
 $btc_exchange_path = '/ticker';
+$cryptsy_url = 'http://pubapi.cryptsy.com/api.php';
 
 $blockchain_url = 'http://www.blockchain.info/';
 $blockchain_addr_options = '?format=json&limit=0&filter=5';
@@ -74,9 +75,11 @@ function create_group_header($group_data)
   global $exchange_rate;
   global $btce_exchange_BTC;
 	global $btce_exchange_LTC;
+  global $cryptsy_exchange_VTC;
   global $currency_code;
   global $currency_symbol;
   global $opts;
+  global $cryptsy_url;
 
 	switch($currency_code) {
 		case "USD":
@@ -112,10 +115,16 @@ function create_group_header($group_data)
   $btceLTC_arr = json_decode($url_data, true);
   $btce_exchange_LTC = $btceLTC_arr['ticker']['last'];
 
+  /* get exchange rate data from cryptsy for VTC */
+  $url = $cryptsy_url."?method=singlemarketdata&marketid="."151";
+  $url_data = file_get_contents($url,false,$context);
+  $cryptsyVTC_arr = json_decode($url_data, true);
+  $cryptsy_exchange_VTC = $cryptsyVTC_arr['return']['markets']['VTC']['lasttradeprice'] * $btce_exchange_BTC;
+  //echo "<pre>", print_r($cryptsyVTC_arr); exit();
 
 	$line =
   "<tr>
-    <th colspan='9'>".
+    <th colspan='10'>".
       $group_data['name']
     ."</th>
   </tr>
@@ -148,6 +157,9 @@ function create_group_header($group_data)
 			BTC->".$group_data['currency']." (".round($btce_exchange_BTC,2).")<br />
 			LTC->".$group_data['currency']." (".round($btce_exchange_LTC,2).")
 		</th>
+   <th>Cryptsy<br />
+     VTC->".$group_data['currency']." (".round($cryptsy_exchange_VTC,2).")
+   </th>
   </tr>";
   
   return $line;
@@ -164,6 +176,7 @@ function get_acc_summary($acc_data)
   global $exchange_rate;
   global $btce_exchange_BTC;
   global $btce_exchange_LTC;
+  global $cryptsy_exchange_VTC;
 	global $currency_symbol;
   global $opts;
 
@@ -187,7 +200,7 @@ function get_acc_summary($acc_data)
 		$group_totals['BTC_gox'] += round($exchanged_balance,2);
 		$group_totals['BTC_bte'] += round($btce_exchange_balance,2); 
 
-  } else {
+  } else if ($cryptocoin == "LTC") {
  		$exchange_balance = 0;
 		$url = "http://explorer.litecoin.net/address/".$btc_address;
 		$url_data = file_get_contents($url,false,$context);
@@ -202,7 +215,22 @@ function get_acc_summary($acc_data)
 		$group_totals['BTC_sent'] += $btc_sent;
 		$group_totals['BTC_balance'] += $btc_balance;
     $group_totals['BTC_bte'] += round($btce_exchange_balance,2);
-  }
+  } else {
+    $exchange_balance = 0;
+    $url = "http://explorer.vertcoin.org/address/".$btc_address;
+    $url_data = file_get_contents($url,false,$context);
+    preg_match("/Received:\ ([\d.]*)/i", $url_data, $temp);
+    $btc_received = round($temp[1],2);
+    preg_match("/Sent:\ ([\d.]*)/i", $url_data, $temp);
+    $btc_sent = round($temp[1],2);
+    $btc_balance = $btc_received - $btc_sent;
+    $exchanged_balance = 0;
+    $cryptsy_exchange_balance = round($btc_balance * $cryptsy_exchange_VTC, 2);
+    $group_totals['BTC_received'] += $btc_received;
+    $group_totals['BTC_sent'] += $btc_sent;
+    $group_totals['BTC_balance'] += $btc_balance;
+    $group_totals['BTC_cryptsy'] += round($cryptsy_exchange_balance,2);
+	}
   $line =
   "<tr>
     <td>
@@ -232,9 +260,14 @@ function get_acc_summary($acc_data)
   else
 		$line .= $currency_symbol.$exchanged_balance."</td><td>";
 	if($btce_exchange_balance == 0)
-		$line .= "-</td></tr>";
+		$line .= "-</td><td>";
 	else
-		$line .= $currency_symbol.$btce_exchange_balance."</td></tr>";
+		$line .= $currency_symbol.$btce_exchange_balance."</td><td>";
+  if($cryptsy_exchange_balance == 0)
+    $line .= "-</td></tr>";
+  else
+    $line .= $currency_symbol.$cryptsy_exchange_balance."</td></tr>";
+
 
   return $line;
 }
@@ -268,17 +301,22 @@ if ($group_totals['BTC_gox'] == 0)
 else
 	$line .= $currency_symbol.$group_totals['BTC_gox']."</th><th>";
 if ($group_totals['BTC_bte'] == 0)
-	$line .= "-</th></tr>";
+	$line .= "-</th><th>";
 else
-	$line .= $currency_symbol.$group_totals['BTC_bte']."</th></tr>";
+	$line .= $currency_symbol.$group_totals['BTC_bte']."</th><th>";
+if ($group_totals['BTC_cryptsy'] == 0)
+  $line .= "-</th></tr>";
+else
+  $line .= $currency_symbol.$group_totals['BTC_cryptsy']."</th></tr>";
 
 $line .= " <tr>
-    <th colspan='9'>
+    <th colspan='10'>
       Name: <input type='text' name='name'>&nbsp;
       Address: <input type='text' name='address'>&nbsp;
 			<select name='cryptocoin'>
 				<option value='BTC'>BTC</option>
 				<option value='LTC'>LTC</option>
+        <option value='VTC'>VTC</option>
 			</select>
       <input type='submit' value='Add Account' name='addacc'>
       <input type='hidden' name='groupid' value='".$group_totals['GRP_id']."'>

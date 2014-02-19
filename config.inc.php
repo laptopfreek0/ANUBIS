@@ -4,7 +4,7 @@ $dbdatabase = "anubis_db";
 
 /* MYSQL specific defines */
 $dbusername = "anubis";
-$dbpassword = "h3rakles";
+$dbpassword = "ahsi*3iah";
 $dbhost = "localhost";
 /* End MYSQL specific defines */
 
